@@ -29,10 +29,10 @@ final class NgKnockout {
 
     private static final Logger LOG = Logger.getLogger(NgKnockout.class.getName());
 
-    public static void applyBindings(Object bindings) {        
+    public static void applyBindings(Object bindings) {
         jsapplybindings(bindings, null);
     }
-
+    
     @JavaScriptBody(args = {"JavaViewModel","JavaFormParent"}, javacall=true, body = ""
         + "var undefined;"
         + "if(!JavaViewModel) return;"
@@ -57,6 +57,19 @@ final class NgKnockout {
     )
     private static native void jsapplybindings(Object viewmodel, String parent);
 
+    public static void disposeBindings(Object bindings) {
+        jsdisposebindings(bindings.getClass().getSimpleName());
+    }    
+
+    @JavaScriptBody(args = {"JavaClass"}, body = ""
+        + "if((typeof window['JavaViewModels'] === 'undefined')"
+        + " ||(window['JavaViewModels'][JavaClass] === 'undefined')"
+        + " ||(window['JavaViewModels'][JavaClass]['JavaForm'] === 'undefined'))"
+        + "  return;"
+        + "window['JavaViewModels'][JavaClass]['JavaForm'].Dispose();"
+    )
+    private static native void jsdisposebindings(String classname);
+    
     public static String getDefsFromClass(Object cls)
     {
         return getDefsFromResource(cls, cls.getClass().getSimpleName()+".ng");

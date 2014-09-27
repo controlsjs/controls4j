@@ -28,6 +28,13 @@ import org.openide.util.lookup.ServiceProvider;
 @ServiceProvider(service = Contexts.Provider.class)
 public final class Controls4J implements Contexts.Provider {
 
+    /** Disposes ViewModels's bindings
+     * @param bindings the ViewModel which bindings will be disposed
+     */
+    public static void disposeBindings(Object bindings) {
+      NgKnockout.disposeBindings(bindings);
+    }
+    
     /** Registers technologies at position 90.
      * @param context the context to register to
      * @param requestor the class requesting the registration
