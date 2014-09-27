@@ -42,50 +42,50 @@ class NgContext implements Technology.BatchInit<Object>, Technology.ValueMutated
     
     @JavaScriptBody(args = {}, javacall = true, body = ""
         // Init variables
-        + "window.ngJava = true;" // Set flag that we are in Java (for those who care)
+        + "window['ngJava'] = true;" // Set flag that we are in Java (for those who care)
             
-        + "if(window.ngAndroid) ng_URL = ng_URLCWP;" // Android local file system URL's don't support URL parameters (same as WP)
+        + "if(window['ngAndroid']) ng_URL = ng_URLCWP;" // Android local file system URL's don't support URL parameters (same as WP)
                                                      // Suprisingly this is not an issue in Cordova.
             
 /*        + "window.ngStartParams = function() {"
         + "  for(var i in startparams) this[i]=startparams[i];"
         + "};"
 */
-        + "document.ontouchmove = function(e){e.preventDefault();};"
+        + "document['ontouchmove'] = function(e){e.preventDefault();};"
             
         // Controls4j specific functions
-        + "window.ngControls4j = function(def,parent,vm) {"
-        + "  this.__ngControls=window.ngControls;"
-        + "  this.ViewModel=vm;"
+        + "window['ngControls4j'] = function(def,parent,vm) {"
+        + "  this['__ngControls']=window['ngControls'];"
+        + "  this['ViewModel']=vm;"
         + "  try { this.__ngControls(def,parent); }"
-        + "  finally { delete this.__ngControls; }"
+        + "  finally { delete this['__ngControls']; }"
         + "};"            
 
         // ngMain
-        + "window.ngMain = function() {" 
-        + "  window.Controls4jInitialized=true;"
-        + "  if(typeof window.JavaStartupModels !== 'undefined')"
+        + "window['ngMain'] = function() {" 
+        + "  window['Controls4jInitialized']=true;"
+        + "  if(typeof window['JavaStartupModels'] !== 'undefined')"
         + "  {"
-        + "    if(typeof window.JavaViewModels === 'undefined') window.JavaViewModels={};"
+        + "    if(typeof window['JavaViewModels'] === 'undefined') window['JavaViewModels']={};"
         + "    var sm;"
-        + "    for(var i=0;i<window.JavaStartupModels.length;i++)"
+        + "    for(var i=0;i<window['JavaStartupModels'].length;i++)"
         + "    {"
-        + "      sm=window.JavaStartupModels[i];"
-        + "      sm.JavaRef=(function(JavaViewModel, JavaFormParent, JavaFormDef, JavaClass) {"
+        + "      sm=window['JavaStartupModels'][i];"
+        + "      sm['JavaRef']=(function(JavaViewModel, JavaFormParent, JavaFormDef, JavaClass) {"
         + "        var JavaRef = new window.ngControls4j(eval('(' + JavaFormDef + ')'), JavaFormParent, JavaViewModel);"
-        + "        window.JavaViewModels[JavaClass]=JavaViewModel;"
-        + "        JavaViewModel.JavaForm=JavaRef;"
+        + "        window['JavaViewModels'][JavaClass]=JavaViewModel;"
+        + "        JavaViewModel['JavaForm']=JavaRef;"
         + "        return JavaRef;"
-        + "      })(sm.JavaViewModel,sm.JavaFormParent,sm.JavaFormDef,sm.JavaClass);"
+        + "      })(sm['JavaViewModel'],sm['JavaFormParent'],sm['JavaFormDef'],sm['JavaClass']);"
         + "    }"
         + "  }"
 
-        + "  if(typeof window.JavaStartupModels !== 'undefined')"
+        + "  if(typeof window['JavaStartupModels'] !== 'undefined')"
         + "  {"
-        + "    for(var i=0;i<window.JavaStartupModels.length;i++)"
+        + "    for(var i=0;i<window['JavaStartupModels'].length;i++)"
         + "    {"
-        + "      sm=window.JavaStartupModels[i];"
-        + "      if(sm.JavaRef) sm.JavaRef.Update();"
+        + "      sm=window['JavaStartupModels'][i];"
+        + "      if(sm['JavaRef']) sm['JavaRef'].Update();"
         + "    }"
         + "  }"
         + "};"
