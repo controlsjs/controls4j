@@ -16,7 +16,7 @@
 
     <groupId>com.controlsjs</groupId>
     <artifactId>controls4j</artifactId>
-    <version>1.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
     <name>Controls.js 4 Java</name>
@@ -155,7 +155,7 @@
     
     <profiles>
       <profile> 
-        <id>staging</id>
+        <id>release</id>
         <build>
           <plugins>
             <plugin>

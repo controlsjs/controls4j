@@ -88,7 +88,7 @@ final class NgKnockout {
         StringBuffer sb = new StringBuffer();
         BufferedReader br = new BufferedReader(new InputStreamReader(file, "UTF-8"));
         for (int c = br.read(); c != -1; c = br.read()) sb.append((char)c);
-        return sb.toString();
+        return sb.toString().replaceAll("\\r\\n?", "\n"); // normalize line endings (Android and iOS accepts only LF)
     }
 
     @JavaScriptBody(args = { "model", "prop", "oldValue", "newValue" }, 
