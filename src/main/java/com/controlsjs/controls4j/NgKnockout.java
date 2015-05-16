@@ -2,7 +2,7 @@
  * Controls.js
  * http://controlsjs.com/
  *
- * Copyright (c) 2014 Position s.r.o.  All rights reserved.
+ * Copyright (c) 2014-2015 Position s.r.o.  All rights reserved.
  *
  * The contents of this file are licensed under the terms of GNU General Public License v3.
  * http://www.gnu.org/licenses/gpl-3.0.html
@@ -11,6 +11,8 @@
  */
 package com.controlsjs.controls4j;
 
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,85 +27,61 @@ import org.netbeans.html.json.spi.PropertyBinding;
  *
  * @author controlsjs-team
  */
-final class NgKnockout {
+final class NgKnockout extends WeakReference<Object> {
 
-    private static final Logger LOG = Logger.getLogger(NgKnockout.class.getName());
-
-    public static void applyBindings(Object bindings) {
-        jsapplybindings(bindings, null);
-    }
+    private static final ReferenceQueue<Object> QUEUE = new ReferenceQueue();
     
-    @JavaScriptBody(args = {"JavaViewModel","JavaFormParent"}, javacall=true, body = ""
-        + "var undefined;"
-        + "if(!JavaViewModel) return;"
-        + "var JavaClass = JavaViewModel['ko-fx.model.getClass']();"
-        + "if(JavaFormParent===null) JavaFormParent=undefined;"
-        + "var JavaFormDef = @com.controlsjs.controls4j.NgKnockout::getDefsFromResource(Ljava/lang/Object;Ljava/lang/String;)(JavaViewModel['ko-fx.model'], JavaClass+'.ng');"
-        + "if(window['Controls4jInitialized'] !== true) {"
-        + "  if(typeof window['JavaStartupModels'] === 'undefined') window['JavaStartupModels']=[];"
-        + "  window['JavaStartupModels'].push({"
-        + "    JavaViewModel: JavaViewModel,"
-        + "    JavaFormParent: JavaFormParent,"
-        + "    JavaFormDef: JavaFormDef,"
-        + "    JavaClass: JavaClass"
-        + "  });"
-        + "  return;"
-        + "}"
-        + "var JavaRef = new window.ngControls4j(eval('(' + JavaFormDef + ')'), JavaFormParent, JavaViewModel);"
-        + "if(typeof window['JavaViewModels'] === 'undefined') window['JavaViewModels']={};"
-        + "window['JavaViewModels'][JavaClass]=JavaViewModel;"
-        + "JavaViewModel['JavaForm']=JavaRef;"
-        + "if(JavaRef) JavaRef.Update();"
-    )
-    private static native void jsapplybindings(Object viewmodel, String parent);
-
-    public static void disposeBindings(Object bindings) {
-        jsdisposebindings(bindings.getClass().getSimpleName());
-    }    
-
-    @JavaScriptBody(args = {"JavaClass"}, body = ""
-        + "if((typeof window['JavaViewModels'] === 'undefined')"
-        + " ||(window['JavaViewModels'][JavaClass] === 'undefined')"
-        + " ||(window['JavaViewModels'][JavaClass]['JavaForm'] === 'undefined'))"
-        + "  return;"
-        + "window['JavaViewModels'][JavaClass]['JavaForm'].Dispose();"
-    )
-    private static native void jsdisposebindings(String classname);
+    private PropertyBinding[] props;
+    private FunctionBinding[] funcs;
+    private Object js;
+    private Object strong;
     
-    public static String getDefsFromClass(Object cls)
-    {
-        return getDefsFromResource(cls, cls.getClass().getSimpleName()+".ng");
-    }
-
-    public static String getDefsFromResource(Object cls, String res)
-    {       
-        try
-        {            
-          InputStream resourceAsStream = cls.getClass().getResourceAsStream(res);
-          try
-          {
-              return getDefsFromStream(resourceAsStream);
-          }    
-          finally
-          {
-              resourceAsStream.close();
-          }
+    public NgKnockout(Object model, Object js, PropertyBinding[] props, FunctionBinding[] funcs) {
+        super(model, QUEUE);
+        this.js = js;
+        this.props = new PropertyBinding[props.length];
+        for (int i = 0; i < props.length; i++) {
+            this.props[i] = props[i].weak();
         }
-        catch(IOException e)
-        {
-            Logger.getLogger(NgKnockout.class.getName()).log(Level.SEVERE, "Error loading Controls.js resource \"{0}\".", res);
-            return "";
-        }       
+        this.funcs = new FunctionBinding[funcs.length];
+        for (int i = 0; i < funcs.length; i++) {
+            this.funcs[i] = funcs[i].weak();
+        }
     }
     
-    public static String getDefsFromStream(InputStream file) throws IOException
-    {
-        StringBuffer sb = new StringBuffer();
-        BufferedReader br = new BufferedReader(new InputStreamReader(file, "UTF-8"));
-        for (int c = br.read(); c != -1; c = br.read()) sb.append((char)c);
-        return sb.toString().replaceAll("\\r\\n?", "\n"); // normalize line endings (Android and iOS accepts only LF)
+    static void cleanUp() {
+        for (;;) {
+            NgKnockout ko = (NgKnockout)QUEUE.poll();
+            if (ko == null) {
+                return;
+            }
+            clean(ko.js);
+            ko.js = null;
+            ko.props = null;
+            ko.funcs = null;
+        }
     }
+    
+    final void hold() {
+        strong = get();
+    }
+    
+    final Object getValue(int index) {
+        return props[index].getValue();
 
+    }
+    
+    final void setValue(int index, Object v) {
+        if (v instanceof NgKnockout) {
+            v = ((NgKnockout)v).get();
+        }
+        props[index].setValue(v);
+    }
+    
+    final void call(int index, Object data, Object ev) {
+        funcs[index].call(data, ev);
+    }
+    
     @JavaScriptBody(args = { "model", "prop", "oldValue", "newValue" }, 
         wait4js = false,
         body =
@@ -122,6 +100,122 @@ final class NgKnockout {
         Object model, String prop, Object oldValue, Object newValue
     );
 
+    @JavaScriptBody(args = {"JavaFormParent", "JavaViewModel"}, javacall=true, body = ""
+        + "var undefined;"
+        + "if((!JavaViewModel)||(typeof JavaViewModel.JavaModel !== 'function')) return null;"
+        + "var JavaModel = JavaViewModel.JavaModel();\n"
+        + "if(!JavaModel) return null;"
+        + "var JavaClass = JavaViewModel.JavaModel.getClass();"
+        + "if(typeof JavaClass === 'undefined') return JavaModel;"
+        + "if((JavaFormParent===null)||(JavaFormParent=='')) JavaFormParent=undefined;"
+        + "if(typeof window['JavaViewModels'] === 'undefined') window['JavaViewModels']={};"
+        + "window['JavaViewModels'][JavaClass]=JavaViewModel;"
+        + "var JavaFormDef = @com.controlsjs.controls4j.NgKnockout::getDefsFromClass(Ljava/lang/Object;)(JavaModel);"
+        + "if(window['Controls4jInitialized'] !== true) {"
+        + "  if(typeof window['JavaStartupModels'] === 'undefined') window['JavaStartupModels']=[];"
+        + "  window['JavaStartupModels'].push({"
+        + "    JavaViewModel: JavaViewModel,"
+        + "    JavaFormParent: JavaFormParent,"
+        + "    JavaFormDef: JavaFormDef,"
+        + "    JavaClass: JavaClass"
+        + "  });"
+        + "  return JavaModel;"
+        + "}"
+        + "var JavaRef = new window.ngControls4j(eval('(' + JavaFormDef + ')'), JavaFormParent, JavaViewModel);"
+        + "JavaViewModel['JavaForm']=JavaRef;"
+        + "if(JavaRef) JavaRef.Update();"
+        + "return JavaModel;"
+    )
+    static native Object applyBindings(String id, Object bindings);
+
+    public static void disposeBindings(Object bindings) {
+        jsdisposebindings(bindings.getClass().getName());
+    }    
+
+    @JavaScriptBody(args = {"JavaClass"}, body = ""
+        + "if((typeof window['JavaViewModels'] === 'undefined')"
+        + " ||(window['JavaViewModels'][JavaClass] === 'undefined')"
+        + " ||(window['JavaViewModels'][JavaClass]['JavaForm'] === 'undefined'))"
+        + "  return;"
+        + "window['JavaViewModels'][JavaClass]['JavaForm'].Dispose();"
+    )
+    private static native void jsdisposebindings(String classname);
+
+    @JavaScriptBody(args = {"JavaClass"}, body = ""
+        + "if((typeof window['JavaViewModels'] === 'undefined')"
+        + " ||(window['JavaViewModels'][JavaClass] === 'undefined'))"
+        + "  return null;"
+        + "return window['JavaViewModels'][JavaClass];"
+    )
+    public static native Object jsModelByClassName(String classname);
+
+    public static Object jsModelByClass(Object bindings) {
+        return jsModelByClassName(bindings.getClass().getName());
+    }    
+    
+    public static Object javaModelByClassName(String classname) {
+        Object ret;
+        ret = jsModelByClassName(classname);
+        if(ret!=null) ret=toModelImpl(ret);
+        return ret;
+    }
+    
+    @JavaScriptBody(args = {"JavaClass"}, body = ""
+        + "if((typeof window['JavaViewModels'] === 'undefined')"
+        + " ||(window['JavaViewModels'][JavaClass] === 'undefined')"
+        + " ||(window['JavaViewModels'][JavaClass]['JavaForm'] === 'undefined'))"
+        + "  return null;"
+        + "return window['JavaViewModels'][JavaClass]['JavaForm'];"
+    )
+    public static native Object jsRefsByClassName(String classname);
+
+    public static Object jsRefsByClass(Object bindings) {
+        return jsRefsByClassName(bindings.getClass().getName());
+    }    
+
+    public static String getDefsFromClass(Object cls)
+    {
+        if (cls instanceof NgKnockout)
+            cls=((NgKnockout)cls).get();
+        if (cls==null) return null;
+
+        return getDefsFromResource(cls, cls.getClass().getSimpleName()+".ng");
+    }
+
+    public static String getDefsFromResource(Object cls, String res)
+    {       
+        if (cls instanceof NgKnockout)
+            cls=((NgKnockout)cls).get();
+        if (cls==null) return null;
+        try
+        {            
+          Class c=cls.getClass();
+          if(c==null) return null;
+          InputStream resourceAsStream = c.getResourceAsStream(res);
+          try
+          {
+              return getDefsFromStream(resourceAsStream);
+          }    
+          finally
+          {
+              resourceAsStream.close();
+          }
+        }
+        catch(IOException e)
+        {
+            Logger.getLogger(NgKnockout.class.getName()).log(Level.SEVERE, "Error loading Controls.js resource \"{0}\".", res);
+            return "";
+        }
+    }
+    
+    public static String getDefsFromStream(InputStream file) throws IOException
+    {
+        StringBuffer sb = new StringBuffer();
+        BufferedReader br = new BufferedReader(new InputStreamReader(file, "UTF-8"));
+        for (int c = br.read(); c != -1; c = br.read()) sb.append((char)c);
+        return sb.toString().replaceAll("\\r\\n?", "\n"); // normalize line endings (Android and iOS accepts only LF)
+    }
+
     @JavaScriptBody(args = { "cnt" }, body = 
         "var arr = new Array(cnt);\n" +
         "for (var i = 0; i < cnt; i++) arr[i] = new Object();\n" +
@@ -131,19 +225,22 @@ final class NgKnockout {
     
     @JavaScriptBody(
         javacall = true,
+        keepAlive = false,
         wait4js = false,
-        args = {"ret", "model", "clsname","propNames", "propReadOnly", "propValues", "propArr", "funcNames", "funcArr"},
+        args = { "clsName", "ret", "propNames", "propReadOnly", "propValues", "funcNames" },
         body = 
-          "Object.defineProperty(ret, 'ko-fx.model', { 'configurable': true, 'writable': true, 'value': model });\n"
-        + "Object.defineProperty(ret, 'ko-fx.model.getClass', { 'configurable': true, 'writable': true, 'value': function() { return clsname; } });\n"
-        + "function koComputed(name, readOnly, value, prop) {\n"
-        + "  var trigger = ko.observable().extend({notify:'always'});"
+          "var _this=this;\n"
+        + "ret.JavaModel = function() { return _this; };\n"
+        + "ret.JavaModel.getClass = function() { return clsName; };\n"
+        + "function koComputed(index, name, readOnly, value) {\n"
+        + "  var trigger = ko['observable']()['extend']({'notify':'always'});"
         + "  function realGetter() {\n"
+        + "    var self = typeof ret.JavaModel === 'function' ? ret.JavaModel() : null;\n"
         + "    try {\n"
-        + "      var v = prop.@org.netbeans.html.json.spi.PropertyBinding::getValue()();\n"
+        + "      var v = self ? self.@com.controlsjs.controls4j.NgKnockout::getValue(I)(index) : null;\n"
         + "      return v;\n"
         + "    } catch (e) {\n"
-        + "      alert(\"Cannot call getValue on \" + model + \" prop: \" + name + \" error: \" + e);\n"
+        + "      alert(\"Cannot call getValue on \" + self + \" prop: \" + name + \" error: \" + e);\n"
         + "    }\n"
         + "  }\n"
         + "  var activeGetter = function() { return value; };\n"
@@ -159,43 +256,58 @@ final class NgKnockout {
         + "  };\n"
         + "  if (!readOnly) {\n"
         + "    bnd['write'] = function(val) {\n"
-        + "      var model = val['ko-fx.model'];\n"
-        + "      prop.@org.netbeans.html.json.spi.PropertyBinding::setValue(Ljava/lang/Object;)(model ? model : val);\n"
+        + "      var self = typeof ret.JavaModel === 'function' ? ret.JavaModel() : null;\n"
+        + "      if (!self) return;\n"
+        + "      var model = typeof val.JavaModel === 'function' ? val.JavaModel() : null;\n"
+        + "      self.@com.controlsjs.controls4j.NgKnockout::setValue(ILjava/lang/Object;)(index, model ? model : val);\n"
         + "    };\n"
         + "  };\n"
         + "  var cmpt = ko['computed'](bnd);\n"
         + "  cmpt['valueHasMutated'] = function(val) {\n"
         + "    if (arguments.length === 1) activeGetter = function() { return val; };\n"
-        + "    trigger.valueHasMutated();\n"
+        + "    trigger['valueHasMutated']();\n"
         + "  };\n"
         + "  ret[name] = cmpt;\n"
         + "}\n"
         + "for (var i = 0; i < propNames.length; i++) {\n"
-        + "  koComputed(propNames[i], propReadOnly[i], propValues[i], propArr[i]);\n"
+        + "  koComputed(i, propNames[i], propReadOnly[i], propValues[i]);\n"
         + "}\n"
-        + "function koExpose(name, func) {\n"
+        + "function koExpose(index, name) {\n"
         + "  ret[name] = function(data, ev) {\n"
-        + "    func.@org.netbeans.html.json.spi.FunctionBinding::call(Ljava/lang/Object;Ljava/lang/Object;)(data, ev);\n"
+        + "    var self = typeof ret['JavaModel'] === 'function' ? ret.JavaModel() : null;\n"
+        + "    if (!self) return;\n"
+        + "    self.@com.controlsjs.controls4j.NgKnockout::call(ILjava/lang/Object;Ljava/lang/Object;)(index, data, ev);\n"
         + "  };\n"
         + "}\n"
         + "for (var i = 0; i < funcNames.length; i++) {\n"
-        + "  koExpose(funcNames[i], funcArr[i]);\n"
+        + "  koExpose(i, funcNames[i]);\n"
         + "}\n"
     )
-    static native void wrapModel(
-        Object ret, Object model, String clsname,
-        String[] propNames, boolean[] propReadOnly, Object propValues, PropertyBinding[] propArr,
-        String[] funcNames, FunctionBinding[] funcArr
+    native void wrapModel(
+        String clsName,
+        Object ret, 
+        String[] propNames, boolean[] propReadOnly, Object propValues,
+        String[] funcNames
     );
     
-    @JavaScriptBody(args = { "o" }, body = "return o['ko-fx.model'] ? o['ko-fx.model'] : o;")
+    @JavaScriptBody(args = { "js" }, wait4js = false, body = 
+        "delete js.JavaModel;\n" +
+        "for (var p in js) {\n" +
+        "  delete js[p];\n" +
+        "};\n" +
+        "\n"
+    )
+    private static native void clean(Object js);
+    
+    @JavaScriptBody(args = { "o" }, body = "return typeof o.JavaModel === 'function' ? o.JavaModel() : o;")
     private static native Object toModelImpl(Object wrapper);
     static Object toModel(Object wrapper) {
-        return toModelImpl(wrapper);
+        Object o = toModelImpl(wrapper);
+        if (o instanceof NgKnockout) {
+            return ((NgKnockout)o).get();
+        } else {
+            return o;
+        }
     }
     
-    @JavaScriptBody(args = {}, body = "if (window.WebSocket) return true; else return false;")
-    static final boolean areWebSocketsSupported() {
-        return false;
-    }
 }

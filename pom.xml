@@ -3,7 +3,7 @@
     Controls.js
     http://controlsjs.com/
 
-    Copyright (c) 2014 Position s.r.o.  All rights reserved.
+    Copyright (c) 2014-2015 Position s.r.o.  All rights reserved.
 
     The contents of this file are licensed under the terms of GNU General Public License v3.
     http://www.gnu.org/licenses/gpl-3.0.html
@@ -16,7 +16,7 @@
 
     <groupId>com.controlsjs</groupId>
     <artifactId>controls4j</artifactId>
-    <version>1.0.1</version>
+    <version>1.1</version>
     <packaging>bundle</packaging>
 
     <name>Controls.js 4 Java</name>
@@ -60,7 +60,7 @@
     <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <netbeans.compile.on.save>none</netbeans.compile.on.save>
-      <net.java.html.version>1.0</net.java.html.version>
+      <net.java.html.version>1.1</net.java.html.version>
       <netbeans.version>RELEASE80</netbeans.version>
     </properties>
     
@@ -70,6 +70,7 @@
           <name>NetBeans</name>
           <url>http://bits.netbeans.org/maven2/</url>
       </repository>
+            
   </repositories>
 
     <build>
@@ -95,6 +96,7 @@
                 <configuration>
                     <instructions>
                         <Export-Package>META-INF.services.*;-noimport:=true;-split-package:=first</Export-Package>
+                        <Private-Package>com.controlsjs.controls4j.*</Private-Package>
                     </instructions>
                 </configuration>
             </plugin>
@@ -106,6 +108,41 @@
                     <source>1.7</source>
                     <target>1.7</target>
                 </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-jarsigner-plugin</artifactId>
+              <version>1.4</version>
+              <executions>
+                <execution>
+                  <id>sign</id>
+                  <goals>
+                    <goal>sign</goal>
+                  </goals>
+                </execution>
+              </executions>
+              <configuration>
+                <keystore>keystore</keystore>
+                <alias>id comodo ca limited certifikátu position s.r.o.</alias>
+                <storepass>{4n2TzBrgc5QHBxJTzqiW4YsULIW6Aubxe6Od03NhXmI=}</storepass>
+              </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-jarsigner-plugin</artifactId>
+              <version>1.4</version>
+              <executions>
+                <execution>
+                  <id>verify</id>
+                  <goals>
+                    <goal>verify</goal>
+                  </goals>
+                </execution>
+              </executions>
+              <configuration>
+                <verbose>true</verbose>
+                <certs>true</certs>
+              </configuration>
             </plugin>
         </plugins>
     </build>
