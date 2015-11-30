@@ -16,7 +16,7 @@
 
     <groupId>com.controlsjs</groupId>
     <artifactId>controls4j</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <packaging>bundle</packaging>
 
     <name>Controls.js 4 Java</name>
@@ -60,7 +60,7 @@
     <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <netbeans.compile.on.save>none</netbeans.compile.on.save>
-      <net.java.html.version>1.1</net.java.html.version>
+      <net.java.html.version>1.2.3</net.java.html.version>
       <netbeans.version>RELEASE80</netbeans.version>
     </properties>
     
@@ -108,41 +108,6 @@
                     <source>1.7</source>
                     <target>1.7</target>
                 </configuration>
-            </plugin>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-jarsigner-plugin</artifactId>
-              <version>1.4</version>
-              <executions>
-                <execution>
-                  <id>sign</id>
-                  <goals>
-                    <goal>sign</goal>
-                  </goals>
-                </execution>
-              </executions>
-              <configuration>
-                <keystore>keystore</keystore>
-                <alias>id comodo ca limited certifikátu position s.r.o.</alias>
-                <storepass>{4n2TzBrgc5QHBxJTzqiW4YsULIW6Aubxe6Od03NhXmI=}</storepass>
-              </configuration>
-            </plugin>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-jarsigner-plugin</artifactId>
-              <version>1.4</version>
-              <executions>
-                <execution>
-                  <id>verify</id>
-                  <goals>
-                    <goal>verify</goal>
-                  </goals>
-                </execution>
-              </executions>
-              <configuration>
-                <verbose>true</verbose>
-                <certs>true</certs>
-              </configuration>
             </plugin>
         </plugins>
     </build>

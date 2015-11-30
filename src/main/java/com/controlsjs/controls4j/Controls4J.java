@@ -22,7 +22,7 @@ import org.openide.util.lookup.ServiceProvider;
 
 /** Controls.js 4 Java enables usage of Controls.js in HTML/Java applications. 
  * It utilizes Java bindings for <a href="http://knockoutjs.com">knockout.js</a>
- * via {@link Model model classes} and links them to 
+ * via model classes and links them to 
  * <a href="http://controlsjs.com">Controls.js</a> application/form.
  * Registers {@link Provider}, so {@link java.util.ServiceLoader} can find it.
  * 
@@ -93,7 +93,7 @@ public final class Controls4J implements Provider {
     }
 
     /** Returns JavaScript object which contains references to GUI controls created by Java Model
-     * @param classname the Model which GUI references are required
+     * @param bindings the Model object which GUI references are required
      * @return JavaScript object or null if not exist
      */
     public static Object jsRefsByClass(Object bindings) {

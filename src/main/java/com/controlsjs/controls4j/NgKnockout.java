@@ -121,10 +121,13 @@ final class NgKnockout extends WeakReference<Object> {
         + "  });"
         + "  return JavaModel;"
         + "}"
-        + "var JavaRef = new window.ngControls4j(eval('(' + JavaFormDef + ')'), JavaFormParent, JavaViewModel);"
-        + "JavaViewModel['JavaForm']=JavaRef;"
-        + "if(JavaRef) JavaRef.Update();"
-        + "return JavaModel;"
+        + "return (function(jvm,jfp,jfd,jm,jc) {"
+        + "  eval('var JavaViewModel=arguments[0],JavaFormParent=arguments[1],JavaFormDef=arguments[2],JavaModel=arguments[3],JavaClass=arguments[4];');" // fix obfuscation
+        + "  var JavaRef = new window.ngControls4j(eval('(' + JavaFormDef + ')'), JavaFormParent, JavaViewModel);"
+        + "  jvm['JavaForm']=JavaRef;"
+        + "  if(JavaRef) JavaRef.Update();"
+        + "  return JavaRef;"
+        + "})(JavaViewModel,JavaFormParent,JavaFormDef,JavaModel,JavaClass);"
     )
     static native Object applyBindings(String id, Object bindings);
 
