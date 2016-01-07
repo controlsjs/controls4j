@@ -121,9 +121,9 @@ final class NgKnockout extends WeakReference<Object> {
         + "  });"
         + "  return JavaModel;"
         + "}"
-        + "return (function(jvm,jfp,jfd,jm,jc) {"
-        + "  eval('var JavaViewModel=arguments[0],JavaFormParent=arguments[1],JavaFormDef=arguments[2],JavaModel=arguments[3],JavaClass=arguments[4];');" // fix obfuscation
-        + "  var JavaRef = new window.ngControls4j(eval('(' + JavaFormDef + ')'), JavaFormParent, JavaViewModel);"
+        + "return (function(JavaViewModel,JavaFormParent,JavaFormDef,JavaModel,JavaClass) {"
+        + "  var def=new Function('JavaViewModel','JavaFormParent','JavaFormDef','JavaModel','JavaClass','return (' + JavaFormDef + ');');"
+        + "  var JavaRef = new window.ngControls4j(def(JavaViewModel,JavaFormParent,JavaFormDef,JavaModel,JavaClass), JavaFormParent, JavaViewModel);"
         + "  jvm['JavaForm']=JavaRef;"
         + "  if(JavaRef) JavaRef.Update();"
         + "  return JavaRef;"

@@ -65,9 +65,9 @@ class NgContext implements Technology.BatchInit<Object>, Technology.ValueMutated
         + "    for(var i=0;i<window['JavaStartupModels'].length;i++)"
         + "    {"
         + "      sm=window['JavaStartupModels'][i];"
-        + "      sm['JavaRef']=(function(jvm, jfp, jfd, jc) {"
-        + "        eval('var JavaViewModel=arguments[0],JavaFormParent=arguments[1],JavaFormDef=arguments[2],JavaModel=arguments[0].JavaModel(),JavaClass=arguments[4];');" // fix obfuscation
-        + "        var JavaRef = new window.ngControls4j(eval('(' + JavaFormDef + ')'), JavaFormParent, JavaViewModel);"
+        + "      sm['JavaRef']=(function(JavaViewModel, JavaFormParent, JavaFormDef, JavaClass) {"
+        + "        var def=new Function('JavaViewModel','JavaFormParent','JavaFormDef','JavaModel','JavaClass','return (' + JavaFormDef + ');');"
+        + "        var JavaRef = new window.ngControls4j(def(JavaViewModel,JavaFormParent,JavaFormDef,JavaViewModel.JavaModel(),JavaClass), JavaFormParent, JavaViewModel);"
         + "        JavaViewModel['JavaForm']=JavaRef;"
         + "        return JavaRef;"
         + "      })(sm['JavaViewModel'],sm['JavaFormParent'],sm['JavaFormDef'],sm['JavaClass']);"

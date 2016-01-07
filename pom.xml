@@ -16,7 +16,7 @@
 
     <groupId>com.controlsjs</groupId>
     <artifactId>controls4j</artifactId>
-    <version>1.2</version>
+    <version>1.2.1</version>
     <packaging>bundle</packaging>
 
     <name>Controls.js 4 Java</name>
