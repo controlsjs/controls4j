@@ -122,11 +122,15 @@ final class NgKnockout extends WeakReference<Object> {
         + "  return JavaModel;"
         + "}"
         + "return (function(JavaViewModel,JavaFormParent,JavaFormDef,JavaModel,JavaClass) {"
-        + "  var def=new Function('JavaViewModel','JavaFormParent','JavaFormDef','JavaModel','JavaClass','return (' + JavaFormDef + ');');"
-        + "  var JavaRef = new window.ngControls4j(def(JavaViewModel,JavaFormParent,JavaFormDef,JavaModel,JavaClass), JavaFormParent, JavaViewModel);"
-        + "  jvm['JavaForm']=JavaRef;"
-        + "  if(JavaRef) JavaRef.Update();"
-        + "  return JavaRef;"
+        + "  try {"
+        + "    var def=new Function('JavaViewModel','JavaFormParent','JavaFormDef','JavaModel','JavaClass','return (' + JavaFormDef + ');');"
+        + "    var JavaRef = new window.ngControls4j(def(JavaViewModel,JavaFormParent,JavaFormDef,JavaModel,JavaClass), JavaFormParent, JavaViewModel);"
+        + "    jvm['JavaForm']=JavaRef;"
+        + "    if(JavaRef) JavaRef.Update();"
+        + "    return JavaRef;"
+        + "  } catch(e) {"
+        + "    ngDEBUGERROR(e);"
+        + "  }"
         + "})(JavaViewModel,JavaFormParent,JavaFormDef,JavaModel,JavaClass);"
     )
     static native Object applyBindings(String id, Object bindings);
@@ -137,8 +141,8 @@ final class NgKnockout extends WeakReference<Object> {
 
     @JavaScriptBody(args = {"JavaClass"}, body = ""
         + "if((typeof window['JavaViewModels'] === 'undefined')"
-        + " ||(window['JavaViewModels'][JavaClass] === 'undefined')"
-        + " ||(window['JavaViewModels'][JavaClass]['JavaForm'] === 'undefined'))"
+        + " ||(typeof window['JavaViewModels'][JavaClass] === 'undefined')"
+        + " ||(typeof window['JavaViewModels'][JavaClass]['JavaForm'] === 'undefined'))"
         + "  return;"
         + "window['JavaViewModels'][JavaClass]['JavaForm'].Dispose();"
     )
@@ -146,7 +150,7 @@ final class NgKnockout extends WeakReference<Object> {
 
     @JavaScriptBody(args = {"JavaClass"}, body = ""
         + "if((typeof window['JavaViewModels'] === 'undefined')"
-        + " ||(window['JavaViewModels'][JavaClass] === 'undefined'))"
+        + " ||(typeof window['JavaViewModels'][JavaClass] === 'undefined'))"
         + "  return null;"
         + "return window['JavaViewModels'][JavaClass];"
     )
@@ -165,8 +169,8 @@ final class NgKnockout extends WeakReference<Object> {
     
     @JavaScriptBody(args = {"JavaClass"}, body = ""
         + "if((typeof window['JavaViewModels'] === 'undefined')"
-        + " ||(window['JavaViewModels'][JavaClass] === 'undefined')"
-        + " ||(window['JavaViewModels'][JavaClass]['JavaForm'] === 'undefined'))"
+        + " ||(typeof window['JavaViewModels'][JavaClass] === 'undefined')"
+        + " ||(typeof window['JavaViewModels'][JavaClass]['JavaForm'] === 'undefined'))"
         + "  return null;"
         + "return window['JavaViewModels'][JavaClass]['JavaForm'];"
     )
@@ -243,7 +247,7 @@ final class NgKnockout extends WeakReference<Object> {
         + "      var v = self ? self.@com.controlsjs.controls4j.NgKnockout::getValue(I)(index) : null;\n"
         + "      return v;\n"
         + "    } catch (e) {\n"
-        + "      alert(\"Cannot call getValue on \" + self + \" prop: \" + name + \" error: \" + e);\n"
+        + "      ngDEBUGERROR(\"Controls4j: Cannot call getValue on property \" + name + \", error: \", e);\n"
         + "    }\n"
         + "  }\n"
         + "  var activeGetter = function() { return value; };\n"
@@ -253,7 +257,7 @@ final class NgKnockout extends WeakReference<Object> {
         + "      var r = activeGetter();\n"
         + "      activeGetter = realGetter;\n"
         + "      if (r) try { var br = r.valueOf(); } catch (err) {}\n"
-        + "      return br === undefined ? r: br;\n"
+        + "      return typeof br === 'undefined' ? r: br;\n"
         + "    },\n"
         + "    'owner': ret\n"
         + "  };\n"

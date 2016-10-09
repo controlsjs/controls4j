@@ -11,9 +11,7 @@
  */
 package com.controlsjs.controls4j;
 
-import java.util.logging.Logger;
 import net.java.html.js.JavaScriptBody;
-import org.netbeans.html.boot.spi.Fn;
 import org.netbeans.html.context.spi.Contexts;
 import org.netbeans.html.json.spi.FunctionBinding;
 import org.netbeans.html.json.spi.PropertyBinding;
@@ -54,7 +52,7 @@ class NgContext implements Technology.BatchInit<Object>, Technology.ValueMutated
         + "  finally { delete this['__ngControls']; }"
         + "};"            
             
-        + "window['ngControls4j'].version = '1.1';" // LIBRARY VERSION
+        + "window['ngControls4j'].version = '1.2.3';" // LIBRARY VERSION
 
         // ngMain
         + "window['ngMain'] = function() {" 
@@ -66,10 +64,14 @@ class NgContext implements Technology.BatchInit<Object>, Technology.ValueMutated
         + "    {"
         + "      sm=window['JavaStartupModels'][i];"
         + "      sm['JavaRef']=(function(JavaViewModel, JavaFormParent, JavaFormDef, JavaClass) {"
-        + "        var def=new Function('JavaViewModel','JavaFormParent','JavaFormDef','JavaModel','JavaClass','return (' + JavaFormDef + ');');"
-        + "        var JavaRef = new window.ngControls4j(def(JavaViewModel,JavaFormParent,JavaFormDef,JavaViewModel.JavaModel(),JavaClass), JavaFormParent, JavaViewModel);"
-        + "        JavaViewModel['JavaForm']=JavaRef;"
-        + "        return JavaRef;"
+        + "        try {"
+        + "          var def=new Function('JavaViewModel','JavaFormParent','JavaFormDef','JavaModel','JavaClass','return (' + JavaFormDef + ');');"
+        + "          var JavaRef = new window.ngControls4j(def(JavaViewModel,JavaFormParent,JavaFormDef,JavaViewModel.JavaModel(),JavaClass), JavaFormParent, JavaViewModel);"
+        + "          JavaViewModel['JavaForm']=JavaRef;"
+        + "          return JavaRef;"
+        + "        } catch(e) {"
+        + "          ngDEBUGERROR(e);"
+        + "        }"
         + "      })(sm['JavaViewModel'],sm['JavaFormParent'],sm['JavaFormDef'],sm['JavaClass']);"
         + "    }"
         + "  }"
@@ -114,9 +116,7 @@ class NgContext implements Technology.BatchInit<Object>, Technology.ValueMutated
             funcNames[i] = funcArr[i].getFunctionName();
         }
         Object ret = getJSObject();
-        final NgKnockout ko = new NgKnockout(model, ret, propArr, funcArr);
-
-        ko.wrapModel(
+        new NgKnockout(model, ret, propArr, funcArr).wrapModel(
             model.getClass().getName(),
             ret, 
             propNames, propReadOnly, propValues,
